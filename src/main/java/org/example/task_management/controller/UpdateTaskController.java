@@ -13,7 +13,7 @@ public class UpdateTaskController {
 
     private final TaskService taskService;
 
-    @PutMapping("/{id}")
+    @PutMapping()
     public ResponseEntity<TaskDTO> updateTask(@RequestBody TaskDTO taskDTO) {
         TaskDTO updated = taskService.updateTask(taskDTO);
         return ResponseEntity.ok(updated);

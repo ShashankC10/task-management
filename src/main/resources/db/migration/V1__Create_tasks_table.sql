@@ -4,5 +4,7 @@ CREATE TABLE tasks (
     description TEXT,
     status VARCHAR(50) DEFAULT 'PENDING',
     priority VARCHAR(50),
-    due_date TIMESTAMP
+    due_date TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
