@@ -36,32 +36,40 @@ This is a **Task Management System** built with Spring Boot and Drools, designed
    mvn spring-boot:run
    ```
 ## Project Structure
+```declarative
 task-management/
 ├── src/
 │   ├── main/
-│   │   ├── java/org/example/task_management/
-│   │   │   ├── config/
-│   │   │   │   └── DroolsConfig.java       # Configures Drools KieContainer and KieSession
-│   │   │   ├── model/
-│   │   │   │   ├── db/
-│   │   │   │   │   └── Task.java           # Task entity
-│   │   │   │   ├── Status.java             # Status enum (PENDING, IN_PROGRESS, DONE, CANCELLED)
-│   │   │   │   └── exception/
-│   │   │   │       └── InvalidTaskTransitionException.java  # Custom exception for invalid transitions
-│   │   │   └── service/
-│   │   │       └── RulesService.java       # Service to fire Drools rules
+│   │   ├── java/
+│   │   │   └── org/example/task_management/
+│   │   │       ├── config/              -> Spring + Drools configuration
+│   │   │       │   └── DroolsConfig.java
+│   │   │       ├── controller/          -> REST controllers
+│   │   │       │   └── CreateTaskController.java
+│   │   │       ├── model/               -> Domain models
+│   │   │       │   ├── db/              -> Entity classes
+│   │   │       │   │   └── Task.java
+│   │   │       │   ├── Status.java      -> Enum for task states
+│   │   │       │   └── exception/       -> Custom exceptions
+│   │   │       │       └── InvalidTaskTransitionException.java
+│   │   │       ├── service/             -> Business logic layer
+│   │   │       │   └── TaskService.java
+│   │   │       └── TaskServiceApplication.java  -> Spring Boot entrypoint
 │   │   └── resources/
-│   │       ├── rules/
-│   │       │   └── task_rules.drl          # Drools rules for task transitions
+│   │       ├── application.yml          -> Spring Boot configuration
 │   │       ├── META-INF/
-│   │       │   └── kmodule.xml             # Drools configuration
-│   │       ├── application.properties       # Spring Boot configuration
-│   │       └── logback.xml                 # Logging configuration
-│   └── test/
-│       └── java/org/example/task_management/
-│           └── RulesServiceTest.java       # Tests for RulesService
-├── pom.xml                                    # Maven dependencies
-└── README.md                                  # This file
+│   │       │   └── kmodule.xml          -> Drools knowledge module config
+│   │       └── rules/
+│   │           └── task_transition_rules.drl   -> Drools rules
+│   └── test/                            -> Unit & integration tests
+│       └── java/
+│           └── org/example/task_management/
+│               └── ... (test classes)
+├── .gitignore
+├── pom.xml                              -> Maven dependencies & build config
+├── README.md                            -> Project documentation
+└── PROJECT_STRUCTURE.txt                -> Project structure (this file)
+```
 
 ## 🔀 State Transition Allowed in the state machine
 
