@@ -1,5 +1,6 @@
 package org.example.task_management.controller;
 
+import org.example.task_management.model.exception.InvalidTaskTransitionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleOtherExceptions(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("An error occurred: " + ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTaskTransitionException.class)
+    public ResponseEntity<String> handleInvalidTransition(InvalidTaskTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }
 

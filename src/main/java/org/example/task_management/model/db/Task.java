@@ -23,7 +23,11 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private Status status;
+    private Status status;  // Current persisted status
+
+    // This field is not stored in DB, only used for rule evaluation
+    @Transient
+    private Status newStatus;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
@@ -36,4 +40,3 @@ public class Task {
 
     private LocalDateTime updatedAt;
 }
-
