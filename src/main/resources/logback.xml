@@ -1,0 +1,19 @@
+<configuration>
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger for your application -->
+    <logger name="org.example.task_management" level="DEBUG"/>
+    <!-- Logger for Drools -->
+    <logger name="org.drools" level="DEBUG"/>
+    <logger name="org.kie" level="DEBUG"/>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

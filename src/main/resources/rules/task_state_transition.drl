@@ -1,0 +1,92 @@
+package rules
+
+import org.example.task_management.model.db.Task
+import org.example.task_management.model.Status
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.example.task_management.model.exception.InvalidTaskTransitionException
+
+global Logger logger
+
+// Rule: Check for null status
+rule "Check Null Status"
+    salience 100
+    when
+        $task : Task(status == null || newStatus == null)
+    then
+        throw new InvalidTaskTransitionException(
+            $task.getId(),
+            $task.getStatus(),
+            $task.getNewStatus(),
+            "Task status or newStatus is null"
+        );
+end
+
+// Rule: Pending → In Progress
+rule "Pending to In Progress"
+    when
+        $task : Task(status == Status.PENDING, newStatus == Status.IN_PROGRESS)
+    then
+        $task.setStatus(Status.IN_PROGRESS);
+        logger.info("Task {} moved from PENDING to IN_PROGRESS", $task.getId());
+end
+
+// Rule: Pending → Cancelled
+rule "Pending to Cancelled"
+    when
+        $task : Task(status == Status.PENDING, newStatus == Status.CANCELLED)
+    then
+        $task.setStatus(Status.CANCELLED);
+        logger.info("Task {} moved from PENDING to CANCELLED", $task.getId());
+end
+
+// Rule: In Progress → Done
+rule "In Progress to Done"
+    when
+        $task : Task(status == Status.IN_PROGRESS, newStatus == Status.DONE)
+    then
+        $task.setStatus(Status.DONE);
+        logger.info("Task {} moved from IN_PROGRESS to DONE", $task.getId());
+end
+
+// Rule: In Progress → Pending
+rule "In Progress to Pending"
+    when
+        $task : Task(status == Status.IN_PROGRESS, newStatus == Status.PENDING)
+    then
+        $task.setStatus(Status.PENDING);
+        logger.info("Task {} moved from IN_PROGRESS to PENDING", $task.getId());
+end
+
+// Rule: In Progress → Cancelled
+rule "In Progress to Cancelled"
+    when
+        $task : Task(status == Status.IN_PROGRESS, newStatus == Status.CANCELLED)
+    then
+        $task.setStatus(Status.CANCELLED);
+        logger.info("Task {} moved from IN_PROGRESS to CANCELLED", $task.getId());
+end
+
+// Rule: Catch-all invalid transitions
+rule "Invalid Transition"
+    agenda-group "task-transitions"
+    salience 10
+    when
+        $task : Task(newStatus != status)
+        not (
+            Task(status == Status.PENDING, newStatus == Status.IN_PROGRESS) or
+            Task(status == Status.PENDING, newStatus == Status.CANCELLED) or
+            Task(status == Status.IN_PROGRESS, newStatus == Status.DONE) or
+            Task(status == Status.IN_PROGRESS, newStatus == Status.PENDING) or
+            Task(status == Status.IN_PROGRESS, newStatus == Status.CANCELLED)
+        )
+    then
+        logger.error("Invalid transition attempted for task ID {}: {} -> {}",
+            $task.getId(), $task.getStatus(), $task.getNewStatus());
+        throw new InvalidTaskTransitionException(
+            $task.getId(),
+            $task.getStatus(),
+            $task.getNewStatus(),
+            "Invalid transition attempted: " + $task.getStatus() + " -> " + $task.getNewStatus()
+        );
+    end
