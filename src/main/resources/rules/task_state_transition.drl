@@ -24,7 +24,6 @@ end
 
 // Rule: Pending → In Progress
 rule "Pending to In Progress"
-    agenda-group "task-transitions"
     when
         $task : Task(status == Status.PENDING, newStatus == Status.IN_PROGRESS)
     then
@@ -34,7 +33,6 @@ end
 
 // Rule: Pending → Cancelled
 rule "Pending to Cancelled"
-    agenda-group "task-transitions"
     when
         $task : Task(status == Status.PENDING, newStatus == Status.CANCELLED)
     then
@@ -44,7 +42,6 @@ end
 
 // Rule: In Progress → Done
 rule "In Progress to Done"
-    agenda-group "task-transitions"
     when
         $task : Task(status == Status.IN_PROGRESS, newStatus == Status.DONE)
     then
@@ -54,7 +51,6 @@ end
 
 // Rule: In Progress → Pending
 rule "In Progress to Pending"
-    agenda-group "task-transitions"
     when
         $task : Task(status == Status.IN_PROGRESS, newStatus == Status.PENDING)
     then
@@ -64,7 +60,6 @@ end
 
 // Rule: In Progress → Cancelled
 rule "In Progress to Cancelled"
-    agenda-group "task-transitions"
     when
         $task : Task(status == Status.IN_PROGRESS, newStatus == Status.CANCELLED)
     then
@@ -75,6 +70,7 @@ end
 // Rule: Catch-all invalid transitions
 rule "Invalid Transition"
     agenda-group "task-transitions"
+    salience 10
     when
         $task : Task(newStatus != status)
         not (
@@ -85,10 +81,12 @@ rule "Invalid Transition"
             Task(status == Status.IN_PROGRESS, newStatus == Status.CANCELLED)
         )
     then
+        logger.error("Invalid transition attempted for task ID {}: {} -> {}",
+            $task.getId(), $task.getStatus(), $task.getNewStatus());
         throw new InvalidTaskTransitionException(
             $task.getId(),
             $task.getStatus(),
             $task.getNewStatus(),
-            "Invalid transition attempted: " + $task.getStatus() + " → " + $task.getNewStatus()
+            "Invalid transition attempted: " + $task.getStatus() + " -> " + $task.getNewStatus()
         );
-end
+    end

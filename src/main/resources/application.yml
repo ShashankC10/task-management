@@ -16,7 +16,7 @@ spring:
 
   logging:
     level:
-      org.example.task_management: INFO
-      org.kie: INFO
+      org.example.task_management: DEBUG
+      org.kie: DEBUG
     pattern:
       console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"

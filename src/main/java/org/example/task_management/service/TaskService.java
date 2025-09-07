@@ -83,7 +83,7 @@ public class TaskService {
 
         // Fire Drools rules before saving
         rulesService.fireRules(existingTask);
-
+        log.debug("Task after rule was fired: "+existingTask);
         Task updatedTask = taskRepository.save(existingTask);
         log.info("Updated task with ID: {}", updatedTask.getId());
         return taskMapper.toDTO(updatedTask);

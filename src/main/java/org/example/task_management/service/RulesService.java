@@ -16,9 +16,11 @@ public class RulesService {
     //method to insert a task into Drools session and evaluate all rules.
     public void fireRules(Task task) {
         try {
+            System.out.println("Rules are being fired");
             kieSession.insert(task);
-            kieSession.fireAllRules();
-            log.debug("Rules fired successfully for task ID: {}", task.getId());
+            int rulesFired = kieSession.fireAllRules();
+            log.info("Rules fired: {}, Task ID: {}, status: {}, newStatus: {}",
+                    rulesFired, task.getId(), task.getStatus(), task.getNewStatus());
         } catch (InvalidTaskTransitionException e) {
             log.error("Invalid transition {}: {}", task.getId(), e.getMessage(), e);
             throw e;
