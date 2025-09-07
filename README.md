@@ -71,7 +71,7 @@ task-management/
 └── PROJECT_STRUCTURE.txt                -> Project structure (this file)
 ```
 
-## 🔀 State Transition Allowed in the state machine
+## State Transition Allowed in the state machine
 
 ```mermaid
 stateDiagram-v2
