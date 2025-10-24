@@ -26,7 +26,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final RulesService rulesService;
-    private final TaskMapper taskMapper = Mappers.getMapper(TaskMapper.class);
+    TaskMapper taskMapper = Mappers.getMapper(TaskMapper.class);
 
     /**
      * Create a new task and fire Drools rules.
