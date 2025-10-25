@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.task_management.model.db.Task;
 import org.example.task_management.model.exception.InvalidTaskTransitionException;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.rule.ConsequenceException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,10 +22,13 @@ public class RulesService {
             int rulesFired = kieSession.fireAllRules();
             log.info("Rules fired: {}, Task ID: {}, status: {}, newStatus: {}",
                     rulesFired, task.getId(), task.getStatus(), task.getNewStatus());
-        } catch (InvalidTaskTransitionException e) {
-            log.error("Invalid transition {}: {}", task.getId(), e.getMessage(), e);
-            throw e;
         }catch (Exception e){
+            if(e instanceof ConsequenceException){
+                if(e.getCause() instanceof InvalidTaskTransitionException ite){
+                    log.error("Invalid transition {}: {}", task.getId(), e.getMessage(), e);
+                    throw ite;
+                }
+            }
             log.error("Error applying rules for task ID {}: {}", task.getId(), e.getMessage(), e);
             throw e;
         }
