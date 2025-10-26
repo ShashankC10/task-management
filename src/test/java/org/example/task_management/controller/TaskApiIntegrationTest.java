@@ -113,12 +113,10 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void updateTask_invalidTransition_returns400_andEntityUnchanged() throws Exception {
-        // Arrange: existing task in PENDING
         Task existing = taskRepository.save(
                 buildTask("OldTitle", "OldDesc", Status.PENDING, Priority.LOW)
         );
 
-        // Attempt invalid transition: PENDING -> DONE
         TaskDTO updateDto = new TaskDTO();
         updateDto.setId(existing.getId());
         updateDto.setTitle("NewTitle");         // should NOT be persisted
@@ -127,14 +125,12 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
         updateDto.setPriority(Priority.HIGH);   // should NOT be persisted
         updateDto.setDueDate(Instant.parse("2031-01-01T00:00:00Z"));
 
-        // Act + Assert: expect 400 from GlobalExceptionHandler
         mvc.perform(put("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(containsString("Invalid transition attempted: PENDING -> DONE")));
 
-        // Verify: entity unchanged in DB
         Task reloaded = taskRepository.findById(existing.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(reloaded.getTitle()).isEqualTo("OldTitle");
         org.assertj.core.api.Assertions.assertThat(reloaded.getDescription()).isEqualTo("OldDesc");
