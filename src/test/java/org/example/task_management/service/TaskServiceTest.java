@@ -63,6 +63,31 @@ class TaskServiceTest {
         assertEquals(Status.PENDING, entity.getStatus());
         verify(repo).save(any());
     }
+    @Test
+    void createTask_setsPendingAndTimestamps_andReturnsId_nullDueDate() {
+        TaskDTO dto = new TaskDTO();
+        dto.setTitle("Test Task");
+        dto.setDescription("This is a test task");
+        dto.setPriority(Priority.HIGH);
+        dto.setStatus(Status.PENDING);
+        dto.setDueDate(null);
+
+        when(repo.save(any(Task.class))).thenAnswer(inv -> {
+            Task t = inv.getArgument(0, Task.class);
+            t.setId(42L);
+            return t;
+        });
+        Long id = service.createTask(dto);
+
+        assertEquals(42L, id);
+
+        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        verify(repo).save(captor.capture());
+        Task entity = captor.getValue();
+
+        assertEquals(Status.PENDING, entity.getStatus());
+        verify(repo).save(any());
+    }
 
     @Test
     void updateTask_mapsFields_firesRules_andSaves() {
