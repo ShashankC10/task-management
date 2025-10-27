@@ -1,0 +1,18 @@
+# Maven build output
+target/
+
+# Git files
+.git/
+.gitignore
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Maven
+.mvn/
+.settings/
+
+# CI/CD files (optional)
+.github/
