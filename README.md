@@ -19,7 +19,7 @@ This is a **Task Management System** built with Spring Boot and Drools, designed
 - **pgsql**:15
 
 ## Prerequisites
-- Java 17 or later
+- Java 24
 - Maven 3.6+
 - Git
 
