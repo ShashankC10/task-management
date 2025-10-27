@@ -1,0 +1,56 @@
+name: CI (Build & Test)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '24'     # match your project JDK
+  MAVEN_OPTS: -Dstyle.color=always
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      # (Optional) Helpful when using Testcontainers
+      - name: Docker info
+        run: |
+          docker version
+          docker info | sed -n '1,80p'
+
+      # Build + run ALL tests (unit + integration)
+      - name: Build & test
+        run: mvn -B -DskipITs=false -DskipTests=false verify
+
+      # If you added JaCoCo in pom.xml, this regenerates HTML (harmless if already done in verify)
+      - name: Generate JaCoCo report
+        run: mvn -B jacoco:report || true
+
+      # Always upload reports so failures are easy to inspect
+      - name: Upload test & coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          if-no-files-found: ignore
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+            **/target/site/jacoco/**
