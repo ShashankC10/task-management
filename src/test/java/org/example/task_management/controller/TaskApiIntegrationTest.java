@@ -113,6 +113,33 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void updateTask_invalidTransition_returns400_andEntityUnchanged() throws Exception {
+        Task existing1 = taskRepository.save(
+                buildTask("OldTitle", "OldDesc", Status.PENDING, Priority.LOW)
+        );
+
+        TaskDTO updateDto1 = new TaskDTO();
+        updateDto1.setId(existing1.getId());
+        updateDto1.setTitle("NewTitle");         // should NOT be persisted
+        updateDto1.setDescription("Updated");    // should NOT be persisted
+        updateDto1.setStatus(Status.DONE);       // invalid from PENDING
+        updateDto1.setPriority(Priority.HIGH);   // should NOT be persisted
+        updateDto1.setDueDate(Instant.parse("2031-01-01T00:00:00Z"));
+
+        mvc.perform(put("/api/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto1)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Invalid transition attempted: PENDING -> DONE")));
+
+        Task reloaded1 = taskRepository.findById(existing1.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(reloaded1.getTitle()).isEqualTo("OldTitle");
+        org.assertj.core.api.Assertions.assertThat(reloaded1.getDescription()).isEqualTo("OldDesc");
+        org.assertj.core.api.Assertions.assertThat(reloaded1.getStatus()).isEqualTo(Status.PENDING);
+        org.assertj.core.api.Assertions.assertThat(reloaded1.getPriority()).isEqualTo(Priority.LOW);
+    }
+
+    @Test
+    void updateTask_validTransition() throws Exception {
         Task existing = taskRepository.save(
                 buildTask("OldTitle", "OldDesc", Status.PENDING, Priority.LOW)
         );
@@ -121,21 +148,20 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
         updateDto.setId(existing.getId());
         updateDto.setTitle("NewTitle");         // should NOT be persisted
         updateDto.setDescription("Updated");    // should NOT be persisted
-        updateDto.setStatus(Status.DONE);       // invalid from PENDING
+        updateDto.setStatus(Status.IN_PROGRESS);       // invalid from PENDING
         updateDto.setPriority(Priority.HIGH);   // should NOT be persisted
         updateDto.setDueDate(Instant.parse("2031-01-01T00:00:00Z"));
 
         mvc.perform(put("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Invalid transition attempted: PENDING -> DONE")));
+                .andExpect(status().isOk());
 
         Task reloaded = taskRepository.findById(existing.getId()).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(reloaded.getTitle()).isEqualTo("OldTitle");
-        org.assertj.core.api.Assertions.assertThat(reloaded.getDescription()).isEqualTo("OldDesc");
-        org.assertj.core.api.Assertions.assertThat(reloaded.getStatus()).isEqualTo(Status.PENDING);
-        org.assertj.core.api.Assertions.assertThat(reloaded.getPriority()).isEqualTo(Priority.LOW);
+        org.assertj.core.api.Assertions.assertThat(reloaded.getTitle()).isEqualTo("NewTitle");
+        org.assertj.core.api.Assertions.assertThat(reloaded.getDescription()).isEqualTo("Updated");
+        org.assertj.core.api.Assertions.assertThat(reloaded.getStatus()).isEqualTo(Status.IN_PROGRESS);
+        org.assertj.core.api.Assertions.assertThat(reloaded.getPriority()).isEqualTo(Priority.HIGH);
     }
 
     @Test
