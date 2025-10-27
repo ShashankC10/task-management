@@ -69,7 +69,6 @@ end
 
 // Rule: Catch-all invalid transitions
 rule "Invalid Transition"
-    agenda-group "task-transitions"
     salience 10
     when
         $task : Task(newStatus != status)
