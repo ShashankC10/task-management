@@ -3,9 +3,6 @@ package org.example.task_management.mapper;
 import org.example.task_management.model.TaskDTO;
 import org.example.task_management.model.db.Task;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
-import org.mapstruct.factory.Mappers;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

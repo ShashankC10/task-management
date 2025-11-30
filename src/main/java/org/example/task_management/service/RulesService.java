@@ -24,7 +24,7 @@ public class RulesService {
         KieSession kSession = kieContainer.newKieSession(kieSessionName);
         try {
             kSession.setGlobal("logger",log);
-            System.out.println("Rules are being fired");
+            log.debug("Rules are being fired for task {}", task.getId());
             kSession.insert(task);
             int rulesFired = kSession.fireAllRules();
             log.info("Rules fired: {}, Task ID: {}, status: {}, newStatus: {}",

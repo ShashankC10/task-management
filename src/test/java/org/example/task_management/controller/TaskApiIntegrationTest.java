@@ -125,7 +125,7 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
         updateDto1.setPriority(Priority.HIGH);   // should NOT be persisted
         updateDto1.setDueDate(Instant.parse("2031-01-01T00:00:00Z"));
 
-        mvc.perform(put("/api/tasks")
+        mvc.perform(put("/api/tasks/{id}", existing1.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto1)))
                 .andExpect(status().isBadRequest())
@@ -152,7 +152,7 @@ class TaskApiIntegrationTest extends AbstractIntegrationTest {
         updateDto.setPriority(Priority.HIGH);   // should NOT be persisted
         updateDto.setDueDate(Instant.parse("2031-01-01T00:00:00Z"));
 
-        mvc.perform(put("/api/tasks")
+        mvc.perform(put("/api/tasks/{id}", existing.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk());

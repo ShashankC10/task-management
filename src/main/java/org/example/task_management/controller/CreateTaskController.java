@@ -2,6 +2,7 @@ package org.example.task_management.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
 import org.example.task_management.model.TaskDTO;
 import org.example.task_management.service.TaskService;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ public class CreateTaskController {
     private final TaskService taskService;
 
     @PostMapping
-    public ResponseEntity<Long> createTask(@RequestBody TaskDTO taskDTO) {
+    public ResponseEntity<Long> createTask(@Valid @RequestBody TaskDTO taskDTO) {
         log.debug("Tasks dto {}",taskDTO);
         Long taskId = taskService.createTask(taskDTO);
         return ResponseEntity

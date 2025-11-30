@@ -68,6 +68,9 @@ public class TaskService {
     @Transactional
     public TaskDTO updateTask(TaskDTO taskDTO) {
         Long id = taskDTO.getId();
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Valid task id is required for update");
+        }
         Task existingTask = taskRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Task not found with id: " + id));
 
@@ -76,9 +79,9 @@ public class TaskService {
         existingTask.setDescription(taskDTO.getDescription());
         existingTask.setNewStatus(taskDTO.getStatus()); // state to update to
         existingTask.setPriority(taskDTO.getPriority());
-        if (taskDTO.getDueDate() != null) {
-            existingTask.setDueDate(LocalDateTime.ofInstant(taskDTO.getDueDate(), ZoneId.systemDefault()));
-        }
+        existingTask.setDueDate(taskDTO.getDueDate() != null
+                ? LocalDateTime.ofInstant(taskDTO.getDueDate(), ZoneId.systemDefault())
+                : null);
         existingTask.setUpdatedAt(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
 
         // Fire Drools rules before saving
