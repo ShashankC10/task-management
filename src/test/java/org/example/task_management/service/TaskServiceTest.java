@@ -1,11 +1,11 @@
 package org.example.task_management.service;
 
-import org.example.task_management.mapper.TaskMapper;
 import org.example.task_management.model.Priority;
 import org.example.task_management.model.Status;
 import org.example.task_management.model.TaskDTO;
 import org.example.task_management.model.db.Task;
 import org.example.task_management.repository.TaskRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +14,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -29,9 +32,12 @@ class TaskServiceTest {
     @Mock
     RulesService rules;
 
-    TaskMapper mapper;
-
     TaskService service;
+
+    @BeforeAll
+    static void allowSelfAttach() {
+        System.setProperty("jdk.attach.allowAttachSelf", "true");
+    }
 
     @BeforeEach
     void setUp() {
@@ -45,7 +51,8 @@ class TaskServiceTest {
         dto.setDescription("This is a test task");
         dto.setPriority(Priority.HIGH);
         dto.setStatus(Status.PENDING);
-        dto.setDueDate(Instant.now().plus(3, ChronoUnit.DAYS));
+        Instant due = Instant.parse("2030-01-01T12:00:00Z");
+        dto.setDueDate(due);
 
         when(repo.save(any(Task.class))).thenAnswer(inv -> {
             Task t = inv.getArgument(0, Task.class);
@@ -61,6 +68,10 @@ class TaskServiceTest {
         Task entity = captor.getValue();
 
         assertEquals(Status.PENDING, entity.getStatus());
+        assertNotNull(entity.getCreatedAt());
+        assertNotNull(entity.getUpdatedAt());
+        assertEquals(due.truncatedTo(ChronoUnit.SECONDS),
+                entity.getDueDate().atZone(ZoneId.systemDefault()).toInstant().truncatedTo(ChronoUnit.SECONDS));
         verify(repo).save(any());
     }
     @Test
@@ -83,9 +94,10 @@ class TaskServiceTest {
 
         ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
         verify(repo).save(captor.capture());
-        Task entity = captor.getValue();
 
+        Task entity = captor.getValue();
         assertEquals(Status.PENDING, entity.getStatus());
+        assertNull(entity.getDueDate());
         verify(repo).save(any());
     }
 
@@ -101,6 +113,8 @@ class TaskServiceTest {
 
         Task existing = new Task();
         existing.setId(7L);
+        existing.setStatus(Status.PENDING);
+        existing.setDueDate(LocalDateTime.of(2030, 1, 1, 10, 0));
         when(repo.findById(7L)).thenReturn(Optional.of(existing));
         when(repo.save(existing)).thenReturn(existing);
 
@@ -113,6 +127,8 @@ class TaskServiceTest {
         assertEquals("d", existing.getDescription());
         assertEquals(Status.DONE, existing.getNewStatus());
         assertNotNull(existing.getUpdatedAt());
+        assertEquals(dto.getDueDate().atZone(ZoneId.systemDefault()).toLocalDateTime(), existing.getDueDate());
+        assertEquals(Status.PENDING, result.getStatus());
     }
 
     @Test
@@ -120,6 +136,90 @@ class TaskServiceTest {
         TaskDTO dto = new TaskDTO(); dto.setId(999L);
         when(repo.findById(999L)).thenReturn(Optional.empty());
         assertThrows(NoSuchElementException.class, () -> service.updateTask(dto));
+    }
+
+    @Test
+    void updateTask_whenDueDateNull_keepsExistingDueDate() {
+        TaskDTO dto = new TaskDTO();
+        dto.setId(5L);
+        dto.setTitle("Updated title");
+        dto.setDescription("Updated desc");
+        dto.setStatus(Status.IN_PROGRESS);
+        dto.setPriority(Priority.MEDIUM);
+        dto.setDueDate(null);
+
+        Task existing = new Task();
+        existing.setId(5L);
+        existing.setStatus(Status.PENDING);
+        existing.setDueDate(LocalDateTime.of(2029, 12, 31, 23, 59));
+
+        when(repo.findById(5L)).thenReturn(Optional.of(existing));
+        when(repo.save(existing)).thenReturn(existing);
+
+        service.updateTask(dto);
+
+        assertEquals(LocalDateTime.of(2029, 12, 31, 23, 59), existing.getDueDate());
+    }
+
+    @Test
+    void getAllTasks_mapsEntities() {
+        Task first = new Task();
+        first.setId(1L);
+        first.setTitle("First");
+        first.setDescription("Desc1");
+        first.setStatus(Status.PENDING);
+        first.setPriority(Priority.LOW);
+        first.setCreatedAt(LocalDateTime.of(2023, 1, 1, 0, 0));
+        first.setUpdatedAt(LocalDateTime.of(2023, 1, 2, 0, 0));
+
+        Task second = new Task();
+        second.setId(2L);
+        second.setTitle("Second");
+        second.setDescription("Desc2");
+        second.setStatus(Status.DONE);
+        second.setPriority(Priority.HIGH);
+        second.setCreatedAt(LocalDateTime.of(2024, 2, 2, 0, 0));
+        second.setUpdatedAt(LocalDateTime.of(2024, 2, 3, 0, 0));
+
+        when(repo.findAll()).thenReturn(List.of(first, second));
+
+        List<TaskDTO> result = service.getAllTasks();
+
+        assertEquals(2, result.size());
+        TaskDTO dto1 = result.get(0);
+        assertEquals(1L, dto1.getId());
+        assertEquals("First", dto1.getTitle());
+        assertEquals(Status.PENDING, dto1.getStatus());
+        assertEquals(Instant.from(first.getCreatedAt().atZone(ZoneId.systemDefault())), dto1.getCreatedAt());
+
+        TaskDTO dto2 = result.get(1);
+        assertEquals(2L, dto2.getId());
+        assertEquals(Status.DONE, dto2.getStatus());
+        assertEquals(Priority.HIGH, dto2.getPriority());
+    }
+
+    @Test
+    void getTaskById_mapsEntity_whenPresent() {
+        Task entity = new Task();
+        entity.setId(10L);
+        entity.setTitle("Single");
+        entity.setStatus(Status.CANCELLED);
+        entity.setPriority(Priority.MEDIUM);
+        entity.setCreatedAt(LocalDateTime.of(2022, 5, 5, 5, 5));
+        when(repo.findById(10L)).thenReturn(Optional.of(entity));
+
+        Optional<TaskDTO> result = service.getTaskById(10L);
+
+        assertTrue(result.isPresent());
+        assertEquals("Single", result.get().getTitle());
+        assertEquals(Status.CANCELLED, result.get().getStatus());
+        assertEquals(Priority.MEDIUM, result.get().getPriority());
+    }
+
+    @Test
+    void getTaskById_returnsEmpty_whenMissing() {
+        when(repo.findById(123L)).thenReturn(Optional.empty());
+        assertTrue(service.getTaskById(123L).isEmpty());
     }
 
     @Test
@@ -133,4 +233,3 @@ class TaskServiceTest {
         assertFalse(service.deleteTask(2L));
     }
 }
-

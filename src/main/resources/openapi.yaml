@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: Task Management Service API
+  version: 1.0.0
+  description: REST API for creating, updating, listing, and deleting tasks with rule-based status transitions.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+paths:
+  /api/tasks:
+    post:
+      summary: Create a task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+                description: Newly created task ID
+    get:
+      summary: List all tasks
+      tags: [Tasks]
+      responses:
+        '200':
+          description: All tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    put:
+      summary: Update a task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid status transition
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Task not found
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/tasks/{id}:
+    get:
+      summary: Get task by ID
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            text/plain:
+              schema:
+                type: string
+    delete:
+      summary: Delete task by ID
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted
+        '404':
+          description: Task not found
+components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  schemas:
+    TaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+    Task:
+      allOf:
+        - $ref: '#/components/schemas/TaskRequest'
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            createdAt:
+              type: string
+              format: date-time
+              nullable: true
+            updatedAt:
+              type: string
+              format: date-time
+              nullable: true
+    Status:
+      type: string
+      enum: [PENDING, IN_PROGRESS, DONE, CANCELLED]
+    Priority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
