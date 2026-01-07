@@ -5,7 +5,6 @@ import org.example.task_management.model.Status;
 import org.example.task_management.model.TaskDTO;
 import org.example.task_management.model.db.Task;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -16,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TaskMapperTest {
 
-    private final TaskMapper mapper = Mappers.getMapper(TaskMapper.class);
+    private final TaskMapper mapper = new TaskMapperImpl();
 
     @Test
     void toDTO_convertsTemporalFieldsAndCopiesValues() {
