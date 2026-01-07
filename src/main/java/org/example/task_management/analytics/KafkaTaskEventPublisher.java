@@ -19,7 +19,7 @@ public class KafkaTaskEventPublisher implements TaskEventPublisher {
     @Override
     public void publish(TaskEvent event) {
         try {
-            kafkaTemplate.send(properties.getTopic(), event.taskId() != null ? event.taskId().toString() : null, event);
+            kafkaTemplate.send(properties.getTopic(), event.taskId() != null ? event.taskId().toString() : "", event);
         } catch (Exception e) {
             log.warn("Failed to publish task event to Kafka topic {}: {}", properties.getTopic(), e.getMessage());
         }

@@ -30,6 +30,10 @@ public class TaskService {
     private final TaskEventPublisher eventPublisher;
     private final TaskMapper taskMapper;
 
+    private static final String ACTION_CREATED= "CREATED";
+    private static final String ACTION_DELETED= "DELETED";
+    private static final String ACTION_STATUS_TRANSITION= "STATUS_TRANSITION";
+
     /**
      * Create a new task and fire Drools rules.
      */
@@ -43,7 +47,7 @@ public class TaskService {
 
         taskRepository.save(task);
         log.info("Created task with ID: {}", task.getId());
-        publishEvent(taskMapper.toDTO(task), "CREATED", null, task.getStatus());
+        publishEvent(taskMapper.toDTO(task), ACTION_CREATED, null, task.getStatus());
         return task.getId();
     }
 
@@ -87,10 +91,10 @@ public class TaskService {
 
         // Fire Drools rules before saving
         rulesService.fireRules(existingTask);
-        log.debug("Task after rule was fired: "+existingTask);
+        log.debug("Task after rule was fired: {}",existingTask);
         Task updatedTask = taskRepository.save(existingTask);
         log.info("Updated task with ID: {}", updatedTask.getId());
-        publishEvent(taskMapper.toDTO(updatedTask), "STATUS_TRANSITION", previousStatus, updatedTask.getStatus());
+        publishEvent(taskMapper.toDTO(updatedTask), ACTION_STATUS_TRANSITION, previousStatus, updatedTask.getStatus());
         return taskMapper.toDTO(updatedTask);
     }
 
@@ -105,7 +109,7 @@ public class TaskService {
                     TaskDTO snapshot = taskMapper.toDTO(task);
                     taskRepository.delete(task);
                     log.info("Deleted task with ID: {}", task.getId());
-                    publishEvent(snapshot, "DELETED", previousStatus, null);
+                    publishEvent(snapshot, ACTION_DELETED, previousStatus, null);
                     return true;
                 })
                 .orElse(false);
