@@ -1,0 +1,3 @@
+analytics:
+  kafka:
+    enabled: false
