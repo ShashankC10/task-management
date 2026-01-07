@@ -2,12 +2,13 @@ package org.example.task_management.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.task_management.analytics.TaskEventPublisher;
 import org.example.task_management.mapper.TaskMapper;
 import org.example.task_management.model.Status;
 import org.example.task_management.model.TaskDTO;
+import org.example.task_management.model.TaskEvent;
 import org.example.task_management.model.db.Task;
 import org.example.task_management.repository.TaskRepository;
-import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final RulesService rulesService;
-    TaskMapper taskMapper = Mappers.getMapper(TaskMapper.class);
+    private final TaskEventPublisher eventPublisher;
+    private final TaskMapper taskMapper;
 
     /**
      * Create a new task and fire Drools rules.
@@ -41,6 +43,7 @@ public class TaskService {
 
         taskRepository.save(task);
         log.info("Created task with ID: {}", task.getId());
+        publishEvent(taskMapper.toDTO(task), "CREATED", null, task.getStatus());
         return task.getId();
     }
 
@@ -70,6 +73,7 @@ public class TaskService {
         Long id = taskDTO.getId();
         Task existingTask = taskRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Task not found with id: " + id));
+        Status previousStatus = existingTask.getStatus();
 
         // Map updated fields
         existingTask.setTitle(taskDTO.getTitle());
@@ -86,6 +90,7 @@ public class TaskService {
         log.debug("Task after rule was fired: "+existingTask);
         Task updatedTask = taskRepository.save(existingTask);
         log.info("Updated task with ID: {}", updatedTask.getId());
+        publishEvent(taskMapper.toDTO(updatedTask), "STATUS_TRANSITION", previousStatus, updatedTask.getStatus());
         return taskMapper.toDTO(updatedTask);
     }
 
@@ -96,10 +101,28 @@ public class TaskService {
     public boolean deleteTask(Long id) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    Status previousStatus = task.getStatus();
+                    TaskDTO snapshot = taskMapper.toDTO(task);
                     taskRepository.delete(task);
                     log.info("Deleted task with ID: {}", task.getId());
+                    publishEvent(snapshot, "DELETED", previousStatus, null);
                     return true;
                 })
                 .orElse(false);
+    }
+
+    private void publishEvent(TaskDTO dto, String action, Status from, Status to) {
+        eventPublisher.publish(new TaskEvent(
+                dto.getId(),
+                action,
+                dto.getTitle(),
+                dto.getDescription(),
+                from,
+                to,
+                dto.getPriority(),
+                dto.getDueDate(),
+                dto.getCreatedAt(),
+                dto.getUpdatedAt()
+        ));
     }
 }
