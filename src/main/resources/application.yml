@@ -30,8 +30,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.value.default.type: org.example.task_management.analytics.TaskEvent
-        spring.json.trusted.packages: org.example.task_management.analytics
+        spring.json.value.default.type: org.example.task_management.model.TaskEvent
+        spring.json.trusted.packages: org.example.task_management.model
       group-id: task-events-consumer
       auto-offset-reset: earliest
 
@@ -39,3 +39,10 @@ analytics:
   kafka:
     enabled: true
     topic: task-events
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    url: /openapi.yaml
+    disable-swagger-default-url: true

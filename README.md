@@ -9,14 +9,14 @@ This is a **Task Management System** built with Spring Boot and Drools, designed
 - Spring Boot for dependency injection and application configuration.
 
 ## Technologies
-- **Java**: 17 or later
-- **Spring Boot**: 2.7.18
+- **Java**: 24
+- **Spring Boot**: 3.5.5
 - **Drools**: 8.44.0.Final
 - **SLF4J/Logback**: For logging
 - **Maven**: Build tool
 - **JUnit**: For testing
-- **Docker**:To run db
-- **pgsql**:15
+- **Docker**: To run the stack (service + Postgres + Kafka + OpenSearch)
+- **PostgreSQL**: 15
 
 ## Prerequisites
 - Java 24
@@ -35,6 +35,11 @@ This is a **Task Management System** built with Spring Boot and Drools, designed
     ```bash
    mvn spring-boot:run
    ```
+
+## API Documentation
+- Swagger UI (live docs): http://localhost:8080/swagger-ui/index.html
+- OpenAPI spec: http://localhost:8080/openapi.yaml (also in `src/main/resources/static/openapi.yaml`)
+- Run the full stack in Docker (app + Postgres + Kafka + OpenSearch): `docker compose -f docker-compose-platform.yml up -d && docker compose up -d` then hit the Swagger UI.
 ## Project Structure
 ```declarative
 task-management/
@@ -59,8 +64,9 @@ task-management/
 │   │       ├── application.yml          -> Spring Boot configuration
 │   │       ├── META-INF/
 │   │       │   └── kmodule.xml          -> Drools knowledge module config
-│   │       └── rules/
-│   │           └── task_transition_rules.drl   -> Drools rules
+│   │       ├── rules/
+│   │       │   └── task_state_transition.drl   -> Drools rules
+│   │       └── static/openapi.yaml       -> OpenAPI 3 specification
 │   └── test/                            -> Unit & integration tests
 │       └── java/
 │           └── org/example/task_management/
@@ -90,4 +96,3 @@ stateDiagram-v2
 
 ## Contact
 For issues or questions, contact ShashankC10 or open an issue on GitHub.
-
