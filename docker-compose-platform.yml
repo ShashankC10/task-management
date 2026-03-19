@@ -30,9 +30,9 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
-      KAFKA_LISTENERS: 'PLAINTEXT://:29092,CONTROLLER://:9093'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_LISTENERS: 'PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -40,9 +40,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     ports:
-      - "9092:9092"
+      - "9092:9092"  # host:9092 → PLAINTEXT_HOST listener inside container
     networks: [platform]
 
   # Shared Search Engine
@@ -72,6 +72,15 @@ services:
     ports:
       - "9200:9200"
     networks: [platform]
+
+  # Topic provisioner — runs once on startup, owns topic definitions for this platform
+  kafka-init:
+    image: apache/kafka:latest
+    container_name: kafka-init
+    depends_on: [kafka]
+    networks: [platform]
+    restart: "no"
+    command: bash -c "echo 'Waiting for Kafka...' && until /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server kafka:29092 > /dev/null 2>&1; do sleep 2; done && /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:29092 --topic task-events --partitions 1 --replication-factor 1 && echo 'Topics provisioned.'"
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
